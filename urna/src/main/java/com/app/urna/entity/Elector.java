@@ -1,9 +1,6 @@
 package com.app.urna.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -18,7 +15,7 @@ import org.hibernate.validator.constraints.br.CPF;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class elector {
+public class Elector {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,15 +35,16 @@ public class elector {
     @NotBlank(message = "É preciso apresentar um telefone")
     private String mobilephone;
 
-    @Pattern(regexp = "^\\(\\d{2}\\) \\d{4}-\\d{4}$")
+    @Pattern(regexp = "^\\(\\d{2}\\) \\d{4}-\\d{4}$", message = "Telefone fixo inválido!")
     private String landlinephone;
 
-    @Email
+    @Email(message = "E-mail Inválido. O formato deve ser exemplo@exemplo.com.")
     private String email;
 
-    private enum status{
-        INATIVO, PENDENTE, BLOQUEADO, VOTOU, APTO;
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    public enum Status {
+        INATIVO, PENDENTE, BLOQUEADO, VOTOU, APTO
     }
-
-
 }
