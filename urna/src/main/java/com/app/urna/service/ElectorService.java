@@ -1,12 +1,13 @@
 package com.app.urna.service;
 
 import com.app.urna.entity.Elector;
+import com.app.urna.entity.enums.StatusElector;
 import com.app.urna.repository.ElectorRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,10 +20,10 @@ public class ElectorService {
 
     @Transactional
     public Elector save(Elector elector) {
-        if (elector.getCpf() == null || elector.getEmail() == null) { // Dfine o stts PENDENTE se CPF ou e-mail estiver faltando
-            elector.setStatus(Elector.Status.PENDENTE);
+        if (StringUtils.hasText(elector.getCpf()) || StringUtils.hasText(elector.getEmail())) {
+            elector.setStatus(StatusElector.PENDENTE); // Define status como PENDENTE se CPF ou e-mail estiver faltando
         } else {
-            elector.setStatus(Elector.Status.APTO); // Dfine o stts APTO se não tiver pendencias
+            elector.setStatus(StatusElector.APTO); // Define status como APTO se não houver pendências
         }
         return electorRepository.save(elector);
     }
@@ -35,36 +36,22 @@ public class ElectorService {
             throw new EntityNotFoundException("Eleitor não encontrado");
         }
 
-        // Se o eleitor já está INATIVO, mantem o stts como INATIVO
-        if (existingElector.getStatus() == Elector.Status.INATIVO) {
-            existingElector.setName(electorDetails.getName());
-            existingElector.setCpf(electorDetails.getCpf());
-            existingElector.setJob(electorDetails.getJob());
-            existingElector.setMobilephone(electorDetails.getMobilephone());
-            existingElector.setLandlinephone(electorDetails.getLandlinephone());
-            existingElector.setEmail(electorDetails.getEmail());
-            // Mantem o stts INATIVO
+        // Se o eleitor já está INATIVO, mantém o stts como INATIVO
+        if (existingElector.getStatus() == StatusElector.INATIVO) {
+            updateElectorInfo(existingElector, electorDetails);
             return electorRepository.save(existingElector);
         }
 
-        // Att as info do eleitor
-        existingElector.setName(electorDetails.getName());
-        existingElector.setCpf(electorDetails.getCpf());
-        existingElector.setJob(electorDetails.getJob());
-        existingElector.setMobilephone(electorDetails.getMobilephone());
-        existingElector.setLandlinephone(electorDetails.getLandlinephone());
-        existingElector.setEmail(electorDetails.getEmail());
-
-        // Dfine o stts PENDENTE se CPF ou e-mail estiver faltando
-        if (electorDetails.getCpf() == null || electorDetails.getEmail() == null) {
-            existingElector.setStatus(Elector.Status.PENDENTE);
+        // Att as informações do eleitor e define o status correto
+        updateElectorInfo(existingElector, electorDetails);
+        if (StringUtils.hasText(electorDetails.getCpf()) || StringUtils.hasText(electorDetails.getEmail())) {
+            existingElector.setStatus(StatusElector.PENDENTE);
         } else {
-            existingElector.setStatus(Elector.Status.APTO);
+            existingElector.setStatus(StatusElector.APTO);
         }
 
         return electorRepository.save(existingElector);
     }
-
 
     @Transactional
     public String delete(Long id) {
@@ -74,26 +61,23 @@ public class ElectorService {
             throw new EntityNotFoundException("Eleitor não encontrado");
         }
 
-        // se o eleitor ja votou
-        if (elector.getStatus() == Elector.Status.VOTOU) {
+        if (elector.getStatus() == StatusElector.VOTOU) {
             throw new IllegalStateException("Usuário já votou. Não foi possível inativá-lo.");
         }
 
-        elector.setStatus(Elector.Status.INATIVO);
+        elector.setStatus(StatusElector.INATIVO);
         electorRepository.save(elector);
         return "Eleitor inativado com sucesso";
     }
 
     public Elector findById(Long id) {
         Optional<Elector> elector = electorRepository.findById(id);
-        return elector.orElse(null);
+        return elector.orElseThrow(() -> new EntityNotFoundException("Eleitor não encontrado"));
     }
 
     public List<Elector> findAll() {
-        // Retorna apenas eleitores com stts APTO
-        return electorRepository.findByStatus(Elector.Status.APTO);
+        return electorRepository.findByStatus(StatusElector.APTO);
     }
-
 
     @Transactional
     public void vote(Long id) {
@@ -103,12 +87,11 @@ public class ElectorService {
             throw new EntityNotFoundException("Eleitor não encontrado");
         }
 
-        // Ve se o eleitor está apto pra votar
-        if (elector.getStatus() == Elector.Status.APTO) {
-            elector.setStatus(Elector.Status.VOTOU);
+        if (elector.getStatus() == StatusElector.APTO) {
+            elector.setStatus(StatusElector.VOTOU);
             electorRepository.save(elector);
-        } else if (elector.getStatus() == Elector.Status.PENDENTE) {
-            elector.setStatus(Elector.Status.BLOQUEADO);
+        } else if (elector.getStatus() == StatusElector.PENDENTE) {
+            elector.setStatus(StatusElector.BLOQUEADO);
             electorRepository.save(elector);
             throw new IllegalStateException("Usuário com cadastro pendente tentou votar. O usuário foi bloqueado!");
         } else {
@@ -116,4 +99,12 @@ public class ElectorService {
         }
     }
 
+    private void updateElectorInfo(Elector existingElector, Elector electorDetails) {
+        existingElector.setName(electorDetails.getName());
+        existingElector.setCpf(electorDetails.getCpf());
+        existingElector.setJob(electorDetails.getJob());
+        existingElector.setMobilephone(electorDetails.getMobilephone());
+        existingElector.setLandlinephone(electorDetails.getLandlinephone());
+        existingElector.setEmail(electorDetails.getEmail());
+    }
 }

@@ -5,6 +5,7 @@ import com.app.urna.entity.Candidate;
 import com.app.urna.entity.Elector;
 import com.app.urna.entity.Vote;
 import com.app.urna.entity.enums.CandidateFunction;
+import com.app.urna.entity.enums.StatusElector;
 import com.app.urna.repository.CandidateRepository;
 import com.app.urna.repository.ElectorRepository;
 import com.app.urna.repository.VoteRepository;
@@ -29,31 +30,45 @@ public class VoteService {
     private VoteRepository voteRepository;
 
     @Transactional
-    public String vote(Vote vote, Long electorId) {
+    public String vote(Long electorId, Long mayorId, Long councilorId) throws Exception {
         Elector elector = electorRepository.findById(electorId)
-                .orElseThrow(() -> new EntityNotFoundException("Eleitor não encontrado"));
+                .orElseThrow(() -> new Exception("Eleitor não encontrado"));
 
-        if (elector.getStatus() != Elector.Status.APTO) {
-            throw new IllegalStateException("Eleitor inapto para votação");
+        // Se o status do eleitor for PENDENTE, da block nele
+        if (elector.getStatus() == StatusElector.PENDENTE) {
+            elector.setStatus(StatusElector.BLOQUEADO);
+            electorRepository.save(elector);
+            throw new Exception("Usuário com cadastro pendente tentou votar. O usuário foi bloqueado!");
         }
 
-        Candidate mayorCandidate = candidateRepository.findById(vote.getMayor().getId())
+        // Se ñ for APTO
+        if (elector.getStatus() != StatusElector.APTO) {
+            throw new Exception("Eleitor inapto para votação");
+        }
+
+        Vote vote = new Vote();
+
+        // Verifique se os candidatos existem e são do tipo correto
+        Candidate mayorCandidate = candidateRepository.findById(mayorId)
                 .orElseThrow(() -> new EntityNotFoundException("Candidato a prefeito não encontrado"));
         if (mayorCandidate.getCandidateFunction() != CandidateFunction.MAYOR) {
-            throw new IllegalArgumentException("O candidato escolhido para prefeito é um candidato a vereador. Refaça a requisição!");
+            throw new Exception("O candidato escolhido para prefeito é um candidato a vereador. Refaça a requisição!");
         }
 
-        Candidate councilorCandidate = candidateRepository.findById(vote.getCouncilor().getId())
+        Candidate councilorCandidate = candidateRepository.findById(councilorId)
                 .orElseThrow(() -> new EntityNotFoundException("Candidato a vereador não encontrado"));
         if (councilorCandidate.getCandidateFunction() != CandidateFunction.COUNCILOR) {
-            throw new IllegalArgumentException("O candidato escolhido para vereador é um candidato a prefeito. Refaça a requisição!");
+            throw new Exception("O candidato escolhido para vereador é um candidato a prefeito. Refaça a requisição!");
         }
+        vote.setMayor(mayorCandidate);
+        vote.setCouncilor(councilorCandidate);
 
+        // Att o voto e o stts do eleitor
         vote.setMoment(new Date());
         String hash = UUID.randomUUID().toString();
         vote.setReceipt(hash);
 
-        elector.setStatus(Elector.Status.VOTOU);
+        elector.setStatus(StatusElector.VOTOU);
         electorRepository.save(elector);
 
         voteRepository.save(vote);
@@ -61,15 +76,16 @@ public class VoteService {
         return hash;
     }
 
+
     @Transactional
     public ApuratedVotes performCounting() {
         List<Vote> votes = voteRepository.findAll();
 
-        // Inicialize contadores para prefeitos e vereadores
+        //Contadores para prefeitos e vereadores
         Map<Long, Integer> mayorVoteCounts = new HashMap<>();
         Map<Long, Integer> councilorVoteCounts = new HashMap<>();
 
-        // Contabilize votos
+        // Contabiliza os votos
         for (Vote vote : votes) {
             if (vote.getMayor() != null && vote.getMayor().getId() != null) {
                 Long mayorId = vote.getMayor().getId();
@@ -81,10 +97,9 @@ public class VoteService {
             }
         }
 
-        // Obtenha todos os candidatos
         List<Candidate> allCandidates = candidateRepository.findAll();
 
-        // Crie listas para prefeitos e vereadores com base nas contagens
+        // Cria lista pra prefeito e vereador
         List<Candidate> mayors = allCandidates.stream()
                 .filter(candidate -> candidate.getCandidateFunction() == CandidateFunction.MAYOR)
                 .peek(candidate -> candidate.setApuratedVotes(mayorVoteCounts.getOrDefault(candidate.getId(), 0)))
@@ -95,7 +110,7 @@ public class VoteService {
                 .peek(candidate -> candidate.setApuratedVotes(councilorVoteCounts.getOrDefault(candidate.getId(), 0)))
                 .collect(Collectors.toList());
 
-        // Ordene os candidatos com base na contagem de votos
+        // Ordena pelos votos
         mayors.sort(Comparator.comparingInt(Candidate::getApuratedVotes).reversed());
         councilors.sort(Comparator.comparingInt(Candidate::getApuratedVotes).reversed());
 
@@ -107,6 +122,6 @@ public class VoteService {
 
         return apuratedVotes;
     }
-
 }
+
 

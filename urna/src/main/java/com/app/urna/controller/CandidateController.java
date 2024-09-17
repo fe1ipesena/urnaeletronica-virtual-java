@@ -24,7 +24,7 @@ public class CandidateController {
     @PostMapping("/save")
     public ResponseEntity<Object> createCandidate(@Valid @RequestBody Candidate candidate, BindingResult result) {
         if (result.hasErrors()) { // Primeiro, verifique se há erros de validação
-            StringBuilder errorMsg = new StringBuilder("--> "); // Cria uma mensagem de erro a partir dos erros encontrados
+            StringBuilder errorMsg = new StringBuilder("--> ");
             result.getAllErrors().forEach(error -> {
                 String fieldName = ((FieldError) error).getField();
                 String defaultMessage = error.getDefaultMessage();
@@ -46,6 +46,7 @@ public class CandidateController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao salvar candidato");
         }
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<Object> getCandidateById(@PathVariable Long id) {
@@ -108,30 +109,40 @@ public class CandidateController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao buscar candidatos");
         }
     }
-                                  //func --prefeito ou vereador
+
     @GetMapping("/active/position/{position}")
-    public ResponseEntity<List<Candidate>> getActiveCandidatesByPosition(@PathVariable int position) {
-        CandidateFunction function;
+    public ResponseEntity<?> getActiveCandidatesByPosition(@PathVariable int position) {
         try {
-            function = CandidateFunction.fromValue(position);
+            CandidateFunction function = CandidateFunction.fromValue(position);
+            List<Candidate> candidates = candidateService.findActiveCandidatesByPosition(function);
+            return ResponseEntity.ok(candidates);
 
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro inesperado: " + e.getMessage());
         }
-
-        List<Candidate> candidates = candidateService.findActiveCandidatesByPosition(function);
-        return ResponseEntity.ok(candidates);
     }
 
-    @GetMapping("/active/mayor") // fazer o try catch
-    public ResponseEntity<List<Candidate>> getActiveCandidatesForMayor() {
-        List<Candidate> candidates = candidateService.findActiveCandidatesForMayor();
-        return ResponseEntity.ok(candidates);
+    @GetMapping("/active/mayor")
+    public ResponseEntity<Object> getActiveCandidatesForMayor() {
+        try {
+            List<Candidate> candidates = candidateService.findActiveCandidatesForMayor();
+            return ResponseEntity.ok(candidates);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao buscar candidatos ativos para prefeito: " + e.getMessage());
+        }
     }
 
-    @GetMapping("/active/councilor") // fazer o try catch
-    public ResponseEntity<List<Candidate>> getActiveCandidatesForCouncilor() {
-        List<Candidate> candidates = candidateService.findActiveCandidatesForCouncilor();
-        return ResponseEntity.ok(candidates);
+    @GetMapping("/active/councilor")
+    public ResponseEntity<Object> getActiveCandidatesForCouncilor() {
+        try {
+            List<Candidate> candidates = candidateService.findActiveCandidatesForCouncilor();
+            return ResponseEntity.ok(candidates);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao buscar candidatos ativos para vereador: " + e.getMessage());
+        }
     }
 }
+

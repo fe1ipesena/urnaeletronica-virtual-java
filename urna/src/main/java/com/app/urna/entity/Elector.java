@@ -1,5 +1,6 @@
 package com.app.urna.entity;
 
+import com.app.urna.entity.enums.StatusElector;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -22,13 +23,13 @@ public class Elector {
     private Long id;
 
     @Pattern(regexp = "^[A-Za-zÀ-ÖØ-öø-ÿ]+( [A-Za-zÀ-ÖØ-öø-ÿ]+)+$", message = "Deve ser nome e sobrenome.")
-    @NotBlank
+    @NotBlank(message = "Não pode ser nulo")
     private String name;
 
     @CPF(message = "CPF inválido")
     private String cpf;
 
-    @NotBlank
+    @NotBlank(message = "Não pode ser nulo")
     private String job;
 
     @Pattern(regexp = "^\\(\\d{2}\\) \\d{4,5}-\\d{4}$", message = "O telefone deve seguir o padrão: (XX) XXXX-XXXX ou (XX) XXXXX-XXXX")
@@ -42,9 +43,6 @@ public class Elector {
     private String email;
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private StatusElector status;
 
-    public enum Status {
-        INATIVO, PENDENTE, BLOQUEADO, VOTOU, APTO
-    }
 }

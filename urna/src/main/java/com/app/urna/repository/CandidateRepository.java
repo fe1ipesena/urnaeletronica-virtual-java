@@ -13,12 +13,9 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long> {
 
     boolean existsByCandidateNumber(Long candidateNumber);
 
-    // Busca candidatos pelo status
     List<Candidate> findByStatus(Status status);
 
-    // Busca candidatos pelo status e por função
-    List<Candidate> findByStatusAndCandidateFunction(Status status, CandidateFunction function);
+    List<Candidate> findByStatusAndCandidateFunction(Status ativo, CandidateFunction function);
 
-    // Busca candidatos por função
     List<Candidate> findByCandidateFunction(CandidateFunction function);
 }

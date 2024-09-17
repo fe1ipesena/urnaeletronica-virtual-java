@@ -1,7 +1,7 @@
 package com.app.urna.repository;
 
 import com.app.urna.entity.Elector;
-import com.app.urna.entity.Elector.Status;
+import com.app.urna.entity.enums.StatusElector;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface ElectorRepository extends JpaRepository<Elector, Long> {
-    List<Elector> findByStatus(Status status); //procura o eleitor de acordo com o stts
+    List<Elector> findByStatus(StatusElector status); //procura o eleitor de acordo com o stts
 }

@@ -76,8 +76,15 @@ public class CandidateService {
     }
 
     public List<Candidate> findActiveCandidatesByPosition(CandidateFunction function) {
-        return candidateRepository.findByStatusAndCandidateFunction(Status.ATIVO, function);
+        List<Candidate> candidates = candidateRepository.findByStatusAndCandidateFunction(Status.ATIVO, function);
+
+        if (candidates.isEmpty()) {
+            throw new IllegalArgumentException("Nenhum candidato ativo encontrado para a função: " + function);
+        }
+
+        return candidates;
     }
+
 
     public List<Candidate> findActiveCandidatesForMayor() {
         return candidateRepository.findByCandidateFunction(CandidateFunction.MAYOR);
