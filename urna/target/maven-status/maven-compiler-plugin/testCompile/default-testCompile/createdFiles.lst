@@ -1,0 +1,13 @@
+com\app\urna\service\CandidateServiceTest.class
+com\app\urna\entity\VoteTest.class
+com\app\urna\controller\CandidateControllerTest.class
+com\app\urna\controller\ElectorControllerTest.class
+com\app\urna\entity\CandidateTest.class
+com\app\urna\repository\CandidateRepositoryTest.class
+com\app\urna\UrnaApplicationTests.class
+com\app\urna\service\VoteServiceTest.class
+com\app\urna\controller\VoteControllerTest.class
+com\app\urna\entity\ApuratedVotesTest.class
+com\app\urna\entity\ElectorTest.class
+com\app\urna\repository\ElectorRepositoryTest.class
+com\app\urna\service\ElectorServiceTest.class

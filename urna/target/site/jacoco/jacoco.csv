@@ -1,0 +1,12 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+urna,com.app.urna.controller,VoteController,7,68,0,2,2,15,0,5,0,4
+urna,com.app.urna.controller,ElectorController,68,107,1,3,17,26,2,8,1,7
+urna,com.app.urna.controller,CandidateController,93,153,1,3,23,39,2,11,1,10
+urna,com.app.urna.entity,Vote,0,16,0,4,0,5,0,3,0,1
+urna,com.app.urna,UrnaApplication,5,3,0,0,2,1,1,1,1,1
+urna,com.app.urna.entity.enums,StatusElector,0,33,0,0,0,2,0,1,0,1
+urna,com.app.urna.entity.enums,CandidateFunction,0,60,0,4,0,11,0,5,0,3
+urna,com.app.urna.entity.enums,Status,0,15,0,0,0,2,0,1,0,1
+urna,com.app.urna.service,VoteService,5,280,4,18,0,54,5,16,1,9
+urna,com.app.urna.service,ElectorService,32,164,8,14,6,40,7,13,0,9
+urna,com.app.urna.service,CandidateService,14,126,3,9,3,30,3,12,0,9

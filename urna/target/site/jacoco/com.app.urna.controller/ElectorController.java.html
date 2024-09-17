@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ElectorController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">urna</a> &gt; <a href="index.source.html" class="el_package">com.app.urna.controller</a> &gt; <span class="el_source">ElectorController.java</span></div><h1>ElectorController.java</h1><pre class="source lang-java linenums">package com.app.urna.controller;
+
+import com.app.urna.entity.Elector;
+import com.app.urna.service.ElectorService;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/electors&quot;)
+<span class="fc" id="L18">public class ElectorController {</span>
+
+    @Autowired
+    private ElectorService electorService;
+
+    @PostMapping(&quot;/save&quot;)
+    public ResponseEntity&lt;Object&gt; createElector(@Valid @RequestBody Elector elector, BindingResult result) {
+<span class="fc bfc" id="L25" title="All 2 branches covered.">        if (result.hasErrors()) {</span>
+<span class="fc" id="L26">            StringBuilder errorMsg = new StringBuilder(&quot;--&gt; &quot;);</span>
+<span class="fc" id="L27">            result.getAllErrors().forEach(error -&gt; {</span>
+<span class="fc" id="L28">                String fieldName = ((FieldError) error).getField();</span>
+<span class="fc" id="L29">                String defaultMessage = error.getDefaultMessage();</span>
+<span class="fc" id="L30">                errorMsg.append(fieldName).append(&quot;: &quot;).append(defaultMessage).append(&quot;\n&quot;);</span>
+<span class="fc" id="L31">            });</span>
+<span class="fc" id="L32">            return new ResponseEntity&lt;&gt;(errorMsg.toString(), HttpStatus.BAD_REQUEST);</span>
+        }
+        try {
+<span class="fc" id="L35">            Elector savedElector = electorService.save(elector);</span>
+<span class="fc" id="L36">            return ResponseEntity.status(HttpStatus.CREATED).body(savedElector);</span>
+
+<span class="nc" id="L38">        } catch (Exception e) {</span>
+<span class="nc" id="L39">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(&quot;Erro ao salvar eleitor&quot;);</span>
+        }
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Object&gt; getElectorById(@PathVariable Long id) {
+        try {
+<span class="fc" id="L46">            Elector elector = electorService.findById(id);</span>
+<span class="fc" id="L47">            return ResponseEntity.ok(elector);</span>
+
+<span class="fc" id="L49">        } catch (Exception e) {</span>
+<span class="fc" id="L50">            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(&quot;Eleitor não encontrado&quot;);</span>
+        }
+    }
+
+    @PutMapping(&quot;update/{id}&quot;)
+    public ResponseEntity&lt;Object&gt; updateElector(@PathVariable Long id, @Valid @RequestBody Elector elector, BindingResult result) {
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">        if (result.hasErrors()) {</span>
+<span class="nc" id="L57">            StringBuilder errorMsg = new StringBuilder(&quot;--&gt; &quot;);</span>
+<span class="nc" id="L58">            result.getAllErrors().forEach(error -&gt; {</span>
+<span class="nc" id="L59">                String fieldName = ((FieldError) error).getField();</span>
+<span class="nc" id="L60">                String defaultMessage = error.getDefaultMessage();</span>
+<span class="nc" id="L61">                errorMsg.append(fieldName).append(&quot;: &quot;).append(defaultMessage).append(&quot;\n&quot;);</span>
+<span class="nc" id="L62">            });</span>
+<span class="nc" id="L63">            return new ResponseEntity&lt;&gt;(errorMsg.toString(), HttpStatus.BAD_REQUEST);</span>
+        }
+        try {
+<span class="fc" id="L66">            Elector updatedElector = electorService.update(id, elector);</span>
+<span class="fc" id="L67">            return ResponseEntity.ok(updatedElector);</span>
+
+<span class="fc" id="L69">        } catch (EntityNotFoundException e) {</span>
+<span class="fc" id="L70">            return new ResponseEntity&lt;&gt;(e.getMessage(), HttpStatus.NOT_FOUND);</span>
+
+<span class="nc" id="L72">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L73">            return new ResponseEntity&lt;&gt;(e.getMessage(), HttpStatus.BAD_REQUEST);</span>
+
+<span class="nc" id="L75">        } catch (Exception e) {</span>
+<span class="nc" id="L76">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(&quot;Erro ao atualizar eleitor&quot;);</span>
+        }
+    }
+
+    @DeleteMapping(&quot;delete/{id}&quot;)
+    public ResponseEntity&lt;String&gt; deleteElector(@PathVariable Long id) {
+        try {
+<span class="fc" id="L83">            String message = electorService.delete(id);</span>
+<span class="fc" id="L84">            return ResponseEntity.ok(message);</span>
+
+<span class="fc" id="L86">        } catch (EntityNotFoundException e) {</span>
+<span class="fc" id="L87">            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());</span>
+
+<span class="nc" id="L89">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L90">            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());</span>
+        }
+    }
+
+    @GetMapping(&quot;/findAll&quot;)
+    public ResponseEntity&lt;Object&gt; getAllElectors() {
+        try {
+<span class="fc" id="L97">            List&lt;Elector&gt; electors = electorService.findAll();</span>
+<span class="fc" id="L98">            return ResponseEntity.ok(electors);</span>
+
+<span class="nc" id="L100">        } catch (Exception e) {</span>
+<span class="nc" id="L101">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(&quot;Erro ao buscar eleitores&quot;);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

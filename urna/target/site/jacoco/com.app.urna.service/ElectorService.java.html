@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ElectorService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">urna</a> &gt; <a href="index.source.html" class="el_package">com.app.urna.service</a> &gt; <span class="el_source">ElectorService.java</span></div><h1>ElectorService.java</h1><pre class="source lang-java linenums">package com.app.urna.service;
+
+import com.app.urna.entity.Elector;
+import com.app.urna.entity.enums.StatusElector;
+import com.app.urna.repository.ElectorRepository;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+<span class="fc" id="L16">public class ElectorService {</span>
+
+    @Autowired
+    private ElectorRepository electorRepository;
+
+    @Transactional
+    public Elector save(Elector elector) {
+        // Define status como APTO se ambos CPF e e-mail estiverem preenchidos
+<span class="pc bpc" id="L24" title="1 of 4 branches missed.">        if (StringUtils.hasText(elector.getCpf()) &amp;&amp; StringUtils.hasText(elector.getEmail())) {</span>
+<span class="fc" id="L25">            elector.setStatus(StatusElector.APTO);</span>
+        } else {
+            // Define status como PENDENTE se CPF ou e-mail estiver faltando
+<span class="fc" id="L28">            elector.setStatus(StatusElector.PENDENTE);</span>
+        }
+
+<span class="fc" id="L31">        return electorRepository.save(elector);</span>
+    }
+
+    @Transactional
+    public Elector update(Long id, Elector electorDetails) {
+<span class="fc" id="L36">        Elector existingElector = findById(id);</span>
+
+<span class="pc bpc" id="L38" title="1 of 2 branches missed.">        if (existingElector == null) {</span>
+<span class="nc" id="L39">            throw new EntityNotFoundException(&quot;Eleitor não encontrado&quot;);</span>
+        }
+
+        // Se o eleitor já está INATIVO, atualiza as informações, mas mantém o status como INATIVO
+<span class="pc bpc" id="L43" title="1 of 2 branches missed.">        if (existingElector.getStatus() == StatusElector.INATIVO) {</span>
+<span class="nc" id="L44">            updateElectorInfo(existingElector, electorDetails);</span>
+<span class="nc" id="L45">            return electorRepository.save(existingElector); // Mantém o status como INATIVO</span>
+        }
+
+        // Atualiza as informações do eleitor
+<span class="fc" id="L49">        updateElectorInfo(existingElector, electorDetails);</span>
+
+        // Define o status com base no preenchimento de CPF ou e-mail
+<span class="pc bpc" id="L52" title="3 of 4 branches missed.">        if (StringUtils.hasText(electorDetails.getCpf()) || StringUtils.hasText(electorDetails.getEmail())) {</span>
+<span class="fc" id="L53">            existingElector.setStatus(StatusElector.APTO); // Define como APTO se houver CPF ou e-mail</span>
+        } else {
+<span class="nc" id="L55">            existingElector.setStatus(StatusElector.PENDENTE); // Define como PENDENTE se ambos estiverem vazios</span>
+        }
+
+<span class="fc" id="L58">        return electorRepository.save(existingElector);</span>
+    }
+
+
+    @Transactional
+    public String delete(Long id) {
+<span class="fc" id="L64">        Elector elector = findById(id);</span>
+
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        if (elector == null) {</span>
+<span class="nc" id="L67">            throw new EntityNotFoundException(&quot;Eleitor não encontrado&quot;);</span>
+        }
+
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (elector.getStatus() == StatusElector.VOTOU) {</span>
+<span class="fc" id="L71">            throw new IllegalStateException(&quot;Usuário já votou. Não foi possível inativá-lo.&quot;);</span>
+        }
+
+<span class="fc" id="L74">        elector.setStatus(StatusElector.INATIVO);</span>
+<span class="fc" id="L75">        electorRepository.save(elector);</span>
+<span class="fc" id="L76">        return &quot;Eleitor inativado com sucesso&quot;;</span>
+    }
+
+    public Elector findById(Long id) {
+<span class="fc" id="L80">        Optional&lt;Elector&gt; elector = electorRepository.findById(id);</span>
+<span class="fc" id="L81">        return elector.orElseThrow(() -&gt; new EntityNotFoundException(&quot;Eleitor não encontrado&quot;));</span>
+    }
+
+    public List&lt;Elector&gt; findAll() {
+<span class="fc" id="L85">        return electorRepository.findByStatus(StatusElector.APTO);</span>
+    }
+
+    @Transactional
+    public void vote(Long id) {
+<span class="fc" id="L90">        Elector elector = findById(id);</span>
+
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        if (elector == null) {</span>
+<span class="nc" id="L93">            throw new EntityNotFoundException(&quot;Eleitor não encontrado&quot;);</span>
+        }
+
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (elector.getStatus() == StatusElector.APTO) {</span>
+<span class="fc" id="L97">            elector.setStatus(StatusElector.VOTOU);</span>
+<span class="fc" id="L98">            electorRepository.save(elector);</span>
+<span class="fc bfc" id="L99" title="All 2 branches covered.">        } else if (elector.getStatus() == StatusElector.PENDENTE) {</span>
+<span class="fc" id="L100">            elector.setStatus(StatusElector.BLOQUEADO);</span>
+<span class="fc" id="L101">            electorRepository.save(elector);</span>
+<span class="fc" id="L102">            throw new IllegalStateException(&quot;Usuário com cadastro pendente tentou votar. O usuário foi bloqueado!&quot;);</span>
+        } else {
+<span class="fc" id="L104">            throw new IllegalStateException(&quot;Usuário não está apto para votar.&quot;);</span>
+        }
+<span class="fc" id="L106">    }</span>
+
+    private void updateElectorInfo(Elector existingElector, Elector electorDetails) {
+<span class="fc" id="L109">        existingElector.setName(electorDetails.getName());</span>
+<span class="fc" id="L110">        existingElector.setCpf(electorDetails.getCpf());</span>
+<span class="fc" id="L111">        existingElector.setJob(electorDetails.getJob());</span>
+<span class="fc" id="L112">        existingElector.setMobilephone(electorDetails.getMobilephone());</span>
+<span class="fc" id="L113">        existingElector.setLandlinephone(electorDetails.getLandlinephone());</span>
+<span class="fc" id="L114">        existingElector.setEmail(electorDetails.getEmail());</span>
+<span class="fc" id="L115">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
