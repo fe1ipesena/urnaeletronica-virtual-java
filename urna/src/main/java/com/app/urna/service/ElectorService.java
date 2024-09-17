@@ -20,11 +20,14 @@ public class ElectorService {
 
     @Transactional
     public Elector save(Elector elector) {
-        if (StringUtils.hasText(elector.getCpf()) || StringUtils.hasText(elector.getEmail())) {
-            elector.setStatus(StatusElector.PENDENTE); // Define status como PENDENTE se CPF ou e-mail estiver faltando
+        // Define status como APTO se ambos CPF e e-mail estiverem preenchidos
+        if (StringUtils.hasText(elector.getCpf()) && StringUtils.hasText(elector.getEmail())) {
+            elector.setStatus(StatusElector.APTO);
         } else {
-            elector.setStatus(StatusElector.APTO); // Define status como APTO se não houver pendências
+            // Define status como PENDENTE se CPF ou e-mail estiver faltando
+            elector.setStatus(StatusElector.PENDENTE);
         }
+
         return electorRepository.save(elector);
     }
 
@@ -36,22 +39,25 @@ public class ElectorService {
             throw new EntityNotFoundException("Eleitor não encontrado");
         }
 
-        // Se o eleitor já está INATIVO, mantém o stts como INATIVO
+        // Se o eleitor já está INATIVO, atualiza as informações, mas mantém o status como INATIVO
         if (existingElector.getStatus() == StatusElector.INATIVO) {
             updateElectorInfo(existingElector, electorDetails);
-            return electorRepository.save(existingElector);
+            return electorRepository.save(existingElector); // Mantém o status como INATIVO
         }
 
-        // Att as informações do eleitor e define o status correto
+        // Atualiza as informações do eleitor
         updateElectorInfo(existingElector, electorDetails);
+
+        // Define o status com base no preenchimento de CPF ou e-mail
         if (StringUtils.hasText(electorDetails.getCpf()) || StringUtils.hasText(electorDetails.getEmail())) {
-            existingElector.setStatus(StatusElector.PENDENTE);
+            existingElector.setStatus(StatusElector.APTO); // Define como APTO se houver CPF ou e-mail
         } else {
-            existingElector.setStatus(StatusElector.APTO);
+            existingElector.setStatus(StatusElector.PENDENTE); // Define como PENDENTE se ambos estiverem vazios
         }
 
         return electorRepository.save(existingElector);
     }
+
 
     @Transactional
     public String delete(Long id) {

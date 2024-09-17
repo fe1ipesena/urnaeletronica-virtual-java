@@ -26,7 +26,6 @@ Este projeto consiste no desenvolvimento de uma API RESTful para gerenciar vota√
 - Java 11
 - Spring Boot
 - JPA/Hibernate
-- H2 Database (banco de dados em mem√≥ria)
 - JUnit 5
 - Mockito
 
